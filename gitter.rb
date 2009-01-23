@@ -60,6 +60,7 @@ userdata["repositories"].each do |repo|
     commitdata = JSON.parse(open("http://github.com/api/v1/json/#{username}/#{repo["name"]}/commit/#{commit["id"]}").read)["commit"]
     
     commit["committed_date"] = DateTime.parse(commit["committed_date"])
+    commit["repository"] = repo["name"]
     commit["details"] = commitdata
 
     user_commits.push commit
@@ -70,7 +71,7 @@ user_commits.sort_by {|c| c["committed_date"]}
 user_commits.each do |commit|
 
   history.write("\n\n------------------------------------------------------------------------\n")
-  history.write("r#{commit["id"][0,7]} | #{commit["committer"]["email"]} | ")
+  history.write("r#{commit["id"][0,7]} | #{commit["repository"]} | ")
   history.write("#{commit["committed_date"].strftime("%Y-%m-%d %H:%M:%S %Z")} ")
   history.write("(#{commit["committed_date"].to_rfc2822}) | ")
   history.write("x lines\n")
