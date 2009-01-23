@@ -53,6 +53,8 @@ userdata["repositories"].each do |repo|
   # }
 
   commits.each do |commit|
+    next if commit["committer"]["email"] != userdata["email"]
+
     puts "#{repo["name"]}: #{commit["id"]}"
 
     history.write("\n\n------------------------------------------------------------------------\n")
@@ -91,8 +93,4 @@ userdata["repositories"].each do |repo|
   # convert git logs to code_swarm XML format (make sure codeswarm/bin is in your path)
   `#{codeswarm_path}/bin/convert_logs.py -g user-history.log -o user-history.log.xml`
 
-  exit
-  
 end
-
-
