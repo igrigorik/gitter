@@ -1,20 +1,9 @@
 require 'rubygems'
 require 'open-uri'
-require 'date'
+require 'time'
 require 'json'
 
-class DateTime
-  def to_rfc2822
-    sprintf("%.3s, %02d %.3s %04d %02d:%02d:%02d %s",
-      Date::DAYNAMES[self.wday],
-      self.day, Date::MONTHNAMES[self.mon],
-      self.year, self.hour, self.min, self.sec,
-      self.zone)
-  end
-end
-
 username = 'igrigorik'
-codeswarm_path = '/code/source/code_swarm/'
 
 userdata = JSON.parse(open('http://github.com/api/v1/json/'+username).read)["user"]
 puts "Author: #{userdata["name"]}"
@@ -24,7 +13,7 @@ puts "Repositories (#{userdata["repositories"].size}):"
 puts userdata["repositories"].collect {|r| r["name"] }.join(", ")
 
 puts "\nCollecting commits"
-history = File.open("user-history.log", "w")
+history = File.open("user-history.log.xml", "w")
 
 # Expected format in user_history.log
 # ------------------------------------------------------------------------
@@ -59,7 +48,7 @@ userdata["repositories"].each do |repo|
     puts "#{repo["name"]}: #{commit["id"]}"
     commitdata = JSON.parse(open("http://github.com/api/v1/json/#{username}/#{repo["name"]}/commit/#{commit["id"]}").read)["commit"]
     
-    commit["committed_date"] = DateTime.parse(commit["committed_date"])
+    commit["committed_date"] = Time.parse(commit["committed_date"])
     commit["repository"] = repo["name"]
     commit["details"] = commitdata
 
@@ -67,16 +56,10 @@ userdata["repositories"].each do |repo|
   end
 end
 
-user_commits.sort_by {|c| c["committed_date"]}
-user_commits.each do |commit|
+history.puts '<?xml version="1.0"?>'
+history.puts '<file_events>'
 
-  history.write("\n\n------------------------------------------------------------------------\n")
-  history.write("r#{commit["id"][0,7]} | #{commit["repository"]} | ")
-  history.write("#{commit["committed_date"].strftime("%Y-%m-%d %H:%M:%S %Z")} ")
-  history.write("(#{commit["committed_date"].to_rfc2822}) | ")
-  history.write("x lines\n")
-  history.write("Changed paths:")
-
+user_commits.sort_by {|c| c["committed_date"] }.each do |commit|
   # Sample commit drilldown from API (JSON):
   # {
   #     {"removed": [{"filename": "commands.rb"}, {"filename": "helpers.rb"}],
@@ -94,11 +77,14 @@ user_commits.each do |commit|
   # }
 
   %w(added removed modified).each do |action|
-    commit["details"][action].each do |file|
-      history.write("\n#{action[0,1].capitalize} #{file["filename"]}")
+    commit["details"][action].each_with_index do |file, idx|
+      history.puts %{<event date="#{commit["committed_date"].to_i*1000}"
+                            filename="#{file["filename"]}"
+                            author="#{commit["repository"]}"
+                            weight="#{commit["details"][action][idx]["diff"].size rescue 1}" />}
     end
   end
 end
 
-# convert git logs to code_swarm XML format (make sure codeswarm/bin is in your path)
-`#{codeswarm_path}/bin/convert_logs.py -g user-history.log -o user-history.log.xml`
+history.puts '</file_events>'
+history.close
