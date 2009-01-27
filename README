@@ -1,3 +1,8 @@
+A script to create an xml file for code_swarm to visualize contributions & commit
+history of a GitHub user across all his/her projects.
+
+Full details: http://www.igvita.com/2009/01/27/ruby-swarms-visualizing-rails-git
+
 To build and install codeswarm you will need JDK, Ant, and GIT, of course. For
 full instructions check the Readme file:
  - http://github.com/rictic/code_swarm/tree/master
