@@ -15,3 +15,14 @@ http://github.com/guides/the-github-api
 = Top Gitters:
 http://github.com/mmcgrana/clj-garden/raw/master/gitcred/RESULTS.txt
 
+= Music:
+Credits to @gilesgoatboy (also @djgoatboy).
+http://gilesgoatboy.org
+
+= Generating a video
+
+# cutting an mp3 file to right length:
+ffmpeg -i music.mp3 -ss 00:00:00 -t 00:01:00 -vcodec copy -acodec mp3 music-cut.mp3
+
+# generating video from snapshots and mp3
+ffmpeg -f image2 -r 24 -i ./%05d.png -i music-cut.mp3 -acodec copy -sameq ./video.avi -pass 2

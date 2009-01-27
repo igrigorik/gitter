@@ -3,7 +3,8 @@ require 'open-uri'
 require 'time'
 require 'json'
 
-username = 'igrigorik'
+username = ARGV[0]
+exit if username.nil?
 
 userdata = JSON.parse(open('http://github.com/api/v1/json/'+username).read)["user"]
 puts "Author: #{userdata["name"]}"
@@ -26,7 +27,11 @@ history = File.open("user-history.log.xml", "w")
 user_commits = []
 userdata["repositories"].each do |repo|
 
-  repodata = JSON.parse(open("http://github.com/api/v1/json/#{username}/#{repo["name"]}/commits/master").read)
+  begin
+    repodata = JSON.parse(open("http://github.com/api/v1/json/#{username}/#{repo["name"]}/commits/master").read)
+  rescue Exception => e
+    sleep 5; next
+  end
   commits = repodata["commits"]
 
   # Sample commit information from API (JSON):
@@ -46,8 +51,12 @@ userdata["repositories"].each do |repo|
     next if commit["committer"]["email"] != userdata["email"]
 
     puts "#{repo["name"]}: #{commit["id"]}"
+    begin
     commitdata = JSON.parse(open("http://github.com/api/v1/json/#{username}/#{repo["name"]}/commit/#{commit["id"]}").read)["commit"]
-    
+    rescue Exception => e
+      sleep 5; next
+    end
+
     commit["committed_date"] = Time.parse(commit["committed_date"])
     commit["repository"] = repo["name"]
     commit["details"] = commitdata
